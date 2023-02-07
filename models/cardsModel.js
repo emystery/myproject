@@ -21,6 +21,21 @@ class Card {
         this.type = type;
     }
 
+    static async getById(id) {
+        try {
+            let [dbCards, fields] =
+                await pool.query("Select * from cards where crd_id=?", [id]);
+            if (!dbCards)
+                return { status: 404, result: { msg: "No card found with that identifier" } };
+            let dbCard = dbCards[0];
+            let result = cardFromDB(dbCard);
+            return { status: 200, result: result };
+        } catch (err) {
+            console.log(err);
+            return { status: 500, result: err };
+        }
+    }
+
     static async getAll() {
         try {
             let result = [];
