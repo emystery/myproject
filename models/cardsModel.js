@@ -80,10 +80,19 @@ class Card {
     static async filterByLoreOrDescription(text) {
         try {
             let result = [];
-            let [dbCards] =
-                await pool.query(`Select * from cards 
-                where crd_description LIKE ? or crd_lore LIKE ?`,
-                    ['%' + text + '%', '%' + text + '%']);
+            let sql;
+            let params = [];
+            if (Array.isArray(text)) {
+                sql = `Select * from cards where REGEXP_LIKE(crd_description,?) 
+                    or REGEXP_LIKE(crd_lore,?)`;
+                let regexp = text.join('|');
+                params = [regexp, regexp];
+            } else {
+                sql = `Select * from cards where crd_description LIKE ? 
+                      or crd_lore LIKE ?`;
+                params = ['%' + text + '%', '%' + text + '%'];
+            }
+            let [dbCards] = await pool.query(sql, params);
             for (let dbCard of dbCards) {
                 result.push(cardFromDB(dbCard));
             }
@@ -93,6 +102,7 @@ class Card {
             return { status: 500, result: err };
         }
     }
+
 
     static async filterByType(typeId) {
         try {
